@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nhân sự Dẫn dắt Sáng kiến AI Doanh nghiệp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        :root {
+            --color-primary-orange: #FF9800;
+            --color-primary-green: #009688;
+            --color-primary-blue-dark: #1a237e;
+            --color-primary-blue-light: #5C6BC0;
+            --color-text-light: #FFFFFF;
+            --color-text-dark: #212121;
+        }
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background-color: #111827;
+            background-image: url('https://images.unsplash.com/photo-1521737711867-e3b97375f902?q=80&w=2574&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+        }
+
+        .presentation-container {
+            transition: all 0.3s ease-in-out;
+        }
+
+        .slide {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.6s ease-in-out;
+            width: 100%;
+            height: 100%;
+            font-size: 20pt;
+        }
+
+        .slide.active {
+            display: flex;
+            opacity: 1;
+        }
+        
+        /* Incremental build items */
+        .build-item {
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            transform: translateY(10px);
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+        }
+
+        .build-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .control-ui {
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        .control-ui.visible-touch { /* For touch devices */
+            opacity: 1;
+        }
+
+        [contenteditable="true"]:hover {
+            outline: 2px dashed var(--color-primary-orange);
+            background-color: rgba(255, 152, 0, 0.1);
+        }
+        
+        [contenteditable="true"]:focus {
+            outline: 2px solid var(--color-primary-orange);
+            background-color: rgba(255, 152, 0, 0.2);
+        }
+
+        /* Custom backgrounds */
+        .bg-core-model { background-color: #f8fafc; color: var(--color-text-dark); }
+        .bg-interactive { 
+            background-color: #2d3748; /* Darker for better contrast */
+            background-image: radial-gradient(#4a5568 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: var(--color-text-light);
+        }
+        .bg-structural {
+            background: linear-gradient(135deg, var(--color-primary-blue-dark), var(--color-primary-blue-light));
+            color: var(--color-text-light);
+        }
+        .bg-image-overlay::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(rgba(26, 35, 126, 0.75), rgba(26, 35, 126, 0.75));
+            z-index: 1;
+        }
+        .image-upload-zone {
+            border: 2px dashed #9ca3af;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        
+        /* Presenter View Styles */
+        .presenter-view-body {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: auto 1fr;
+            gap: 1rem;
+            height: 100vh;
+            padding: 1rem;
+            background: #212121;
+            color: white;
+            font-family: 'Oswald', sans-serif;
+        }
+        .presenter-view-main { grid-column: 1 / 2; grid-row: 1 / 3; border: 1px solid #444;}
+        .presenter-view-side { grid-column: 2 / 3; }
+        .presenter-view-next { border: 1px solid #444; margin-bottom: 1rem; min-height: 200px; }
+        .presenter-view-notes { border: 1px solid #444; height: 100%; overflow-y: auto; padding: 1rem; }
+        .presenter-view-header { grid-column: 1 / 3; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Fullscreen Fallback Styles */
+        .presentation-container.fullscreen-active {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 9999;
+            background-color: #111827;
+        }
+        .fullscreen-active #slide-viewport {
+            border-radius: 0;
+            max-width: 100%;
+            max-height: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 flex items-center justify-center min-h-screen p-4 overflow-hidden">
+    <div class="presentation-container relative w-full h-full flex items-center justify-center">
+
+        <!-- Slide Viewport -->
+        <div id="slide-viewport" class="w-full max-w-6xl aspect-[16/9] bg-black rounded-2xl shadow-2xl overflow-hidden relative">
+            
+            <!-- Slide 1: Tiêu đề -->
+            <div class="slide bg-structural flex-col justify-center items-center text-center p-12" id="slide-1" data-notes="Bắt đầu bằng cách nêu bật sự chuyển dịch vai trò. Nhấn mạnh từ 'Đối tác' sang 'Người Tiên phong'. Đây là tuyên bố sứ mệnh cho toàn bộ buổi nói chuyện.">
+                <div class="relative z-10 w-full">
+                    <h1 contenteditable="true" class="text-5xl md:text-7xl font-bold tracking-wider leading-tight text-white">Từ Đối tác đến Người Tiên phong</h1>
+                    <p contenteditable="true" class="mt-4 text-2xl md:text-3xl text-gray-200" style="color: var(--color-primary-orange);">Sứ mệnh của Giám đốc Nhân sự trong việc Dẫn dắt Chiến lược AI của Doanh nghiệp</p>
+                    <div class="image-upload-zone relative mt-8 h-64 w-full max-w-lg mx-auto rounded-lg group">
+                        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover rounded-lg opacity-30">
+                         <div class="absolute inset-0 flex items-center justify-center z-10">
+                            <label class="cursor-pointer text-white opacity-0 group-hover:opacity-100 transition-opacity p-4 bg-black bg-opacity-50 rounded-lg">Tải lên hình ảnh khác</label>
+                            <input type="file" accept="image/*" class="hidden">
+                        </div>
+                        <button class="absolute top-2 right-2 z-20 text-white bg-red-600 rounded-full h-6 w-6 flex items-center justify-center opacity-0 group-hover:opacity-100">&times;</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Mục lục -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-2" data-notes="Giới thiệu nhanh lộ trình của buổi nói chuyện. Mỗi điểm sẽ được tiết lộ tuần tự để giữ sự tập trung.">
+                <h2 contenteditable="true" class="text-5xl font-bold mb-12 text-gray-800">Lộ trình hôm nay</h2>
+                <ul class="space-y-6 text-3xl text-gray-700">
+                    <li class="build-item flex items-center"><i class="fas fa-flag-checkered text-3xl mr-4" style="color: var(--color-primary-green);"></i><span contenteditable="true">1. Mệnh lệnh Chiến lược: Tại sao Nhân sự phải dẫn dắt?</span></li>
+                    <li class="build-item flex items-center"><i class="fas fa-sitemap text-3xl mr-4" style="color: var(--color-primary-green);"></i><span contenteditable="true">2. Mô hình Giải pháp: 5 Trụ cột Lãnh đạo AI của Nhân sự</span></li>
+                    <li class="build-item flex items-center"><i class="fas fa-globe-americas text-3xl mr-4" style="color: var(--color-primary-green);"></i><span contenteditable="true">3. Bài học từ các Nhà lãnh đạo Toàn cầu (Case Studies)</span></li>
+                    <li class="build-item flex items-center"><i class="fas fa-road text-3xl mr-4" style="color: var(--color-primary-green);"></i><span contenteditable="true">4. Công cụ Thực hành: Lộ trình Hành động 4 Giai đoạn</span></li>
+                    <li class="build-item flex items-center"><i class="fas fa-rocket text-3xl mr-4" style="color: var(--color-primary-green);"></i><span contenteditable="true">5. Kêu gọi Hành động: Tương lai của Nhân sự Bắt đầu từ Hôm nay</span></li>
+                </ul>
+            </div>
+
+            <!-- Slide 3: Mục tiêu -->
+            <div class="slide bg-interactive flex-col justify-center p-16" id="slide-3" data-notes="Đặt ra kỳ vọng rõ ràng. Điều này giúp khán giả biết họ sẽ nhận được gì. Hãy nói rõ đây là những kỹ năng và kiến thức thực tiễn.">
+                <div class="w-full">
+                    <h2 contenteditable="true" class="text-5xl font-bold mb-12 text-center">Mục tiêu đạt được sau buổi chia sẻ</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-2xl">
+                        <div class="bg-white bg-opacity-10 p-6 rounded-lg build-item"><p contenteditable="true"><i class="fas fa-brain mr-3" style="color: var(--color-primary-orange);"></i>Hiểu rõ vai trò chiến lược của Nhân sự trong kỷ nguyên AI.</p></div>
+                        <div class="bg-white bg-opacity-10 p-6 rounded-lg build-item"><p contenteditable="true"><i class="fas fa-project-diagram mr-3" style="color: var(--color-primary-orange);"></i>Nắm vững 5 trụ cột lãnh đạo AI để dẫn dắt sự thay đổi.</p></div>
+                        <div class="bg-white bg-opacity-10 p-6 rounded-lg build-item"><p contenteditable="true"><i class="fas fa-chart-line mr-3" style="color: var(--color-primary-orange);"></i>Phân tích các case study thành công từ Unilever, IBM, Hilton.</p></div>
+                        <div class="bg-white bg-opacity-10 p-6 rounded-lg build-item"><p contenteditable="true"><i class="fas fa-map-signs mr-3" style="color: var(--color-primary-orange);"></i>Xây dựng lộ trình hành động cụ thể cho tổ chức của bạn.</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Tiêu đề Phần 1 -->
+            <div class="slide bg-structural flex-col justify-center items-center text-center p-12" id="slide-4" data-notes="Chuyển tiếp sang phần đầu tiên. Hình ảnh nên gợi lên cảm giác cấp bách và cơ hội.">
+                <div class="bg-image-overlay"></div>
+                <img src="https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=2831&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover">
+                <div class="relative z-10">
+                    <p contenteditable="true" class="text-3xl text-gray-300">Phần 1</p>
+                    <h2 contenteditable="true" class="text-6xl font-bold mt-2">Mệnh lệnh Chiến lược</h2>
+                    <p contenteditable="true" class="text-3xl mt-4 text-gray-200">Tại sao Nhân sự phải Dẫn dắt Cuộc Cách mạng AI</p>
+                </div>
+            </div>
+
+            <!-- Slide 5: Nghịch lý AI -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-5">
+                <h2 contenteditable="true" class="text-5xl font-bold text-gray-800 leading-tight">Nghịch lý AI cho thấy một khoảng cách đáng báo động giữa tham vọng và thực tại.</h2>
+                <div class="mt-8 flex flex-wrap items-center justify-center gap-8">
+                    <div class="text-center flex-1 min-w-[300px]">
+                        <p contenteditable="true" class="text-7xl md:text-8xl font-bold" style="color: var(--color-primary-green);">91%</p>
+                        <p contenteditable="true" class="mt-2 text-2xl">lãnh đạo tin rằng nhân tài là yếu tố sống còn cho thành công của AI.</p>
+                    </div>
+                    <div class="text-5xl font-thin text-gray-300">VS</div>
+                    <div class="text-center flex-1 min-w-[300px]">
+                        <p contenteditable="true" class="text-7xl md:text-8xl font-bold" style="color: var(--color-primary-orange);">21%</p>
+                        <p contenteditable="true" class="mt-2 text-2xl">lãnh đạo Nhân sự tham gia sâu vào việc định hình chiến lược AI của tổ chức.</p>
+                    </div>
+                </div>
+                <p contenteditable="true" class="text-right text-lg mt-8 text-gray-500 w-full">Nguồn: Harvard Business Review Analytic Services (HBR-AS)</p>
+            </div>
+            
+            <!-- Slide 6: Redefining the Mission -->
+            <div class="slide bg-interactive flex-col justify-center items-center text-center p-16" id="slide-6">
+                <div>
+                     <h2 contenteditable="true" class="text-5xl font-bold leading-tight">Sứ mệnh của Nhân sự không phải là 'áp dụng AI', mà là 'dẫn dắt doanh nghiệp VƯỢT QUA' quá trình chuyển đổi AI.</h2>
+                     <div class="mt-12 text-3xl flex items-center justify-center gap-4 flex-wrap">
+                        <div contenteditable="true" class="bg-red-200 text-red-800 p-4 rounded-lg">Quản lý Quy trình</div>
+                        <i class="fas fa-long-arrow-alt-right text-5xl"></i>
+                        <div contenteditable="true" class="bg-green-200 text-green-800 p-4 rounded-lg">Dẫn dắt Chuyển đổi</div>
+                     </div>
+                     <p contenteditable="true" class="text-lg mt-12 opacity-70">Nguồn: Forbes, "HR’s Once-In-A-Generation Opportunity To Reinvent Itself"</p>
+                </div>
+            </div>
+            
+            <!-- Slide 7: The Cost of Delay -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-7">
+                <h2 contenteditable="true" class="text-5xl font-bold text-gray-800 text-center mb-10">Sự thụ động của Nhân sự trong kỷ nguyên AI sẽ dẫn đến những rủi ro không bền vững.</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div class="build-item p-6 border-2 border-red-500 rounded-lg bg-red-50">
+                        <i class="fas fa-times-circle text-5xl text-red-500"></i>
+                        <h3 contenteditable="true" class="text-3xl font-bold mt-4">Thất bại Áp dụng</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Sự kháng cự từ nhân viên dẫn đến tỷ lệ áp dụng thấp và lãng phí đầu tư.</p>
+                    </div>
+                    <div class="build-item p-6 border-2 border-red-500 rounded-lg bg-red-50">
+                        <i class="fas fa-balance-scale-left text-5xl text-red-500"></i>
+                        <h3 contenteditable="true" class="text-3xl font-bold mt-4">Rủi ro Pháp lý</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Thuật toán thiên vị có thể dẫn đến kiện tụng và tổn hại thương hiệu nhà tuyển dụng.</p>
+                    </div>
+                     <div class="build-item p-6 border-2 border-red-500 rounded-lg bg-red-50">
+                        <i class="fas fa-users-slash text-5xl text-red-500"></i>
+                        <h3 contenteditable="true" class="text-3xl font-bold mt-4">Khoảng trống Kỹ năng</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Thiếu hoạch định chiến lược làm tê liệt khả năng đổi mới và cạnh tranh của công ty.</p>
+                    </div>
+                </div>
+                 <p contenteditable="true" class="text-right text-lg mt-8 text-gray-500 w-full">Nguồn: Gartner, McKinsey</p>
+            </div>
+
+            <!-- Slide 8: Tiêu đề Phần 2 -->
+             <div class="slide bg-structural flex-col justify-center items-center text-center p-12" id="slide-8">
+                 <div class="bg-image-overlay"></div>
+                <img src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover">
+                <div class="relative z-10">
+                    <p contenteditable="true" class="text-3xl text-gray-300">Phần 2</p>
+                    <h2 contenteditable="true" class="text-6xl font-bold mt-2">Năm Trụ cột Lãnh đạo AI</h2>
+                    <p contenteditable="true" class="text-3xl mt-4 text-gray-200">Mô hình Giải pháp cho Chức năng Nhân sự</p>
+                </div>
+            </div>
+            
+            <!-- Slide 9: 5 Trụ cột Diagram - REDESIGNED -->
+            <div class="slide bg-core-model flex-col items-center p-8" id="slide-9">
+                <h2 contenteditable="true" class="text-4xl font-bold text-gray-800 text-center mb-8 flex-shrink-0">Đây là 5 trụ cột để Nhân sự dẫn dắt chiến lược AI một cách toàn diện.</h2>
+                <div class="w-full flex flex-col items-center justify-around flex-grow">
+                    <!-- Top Row -->
+                    <div class="flex flex-wrap justify-center items-start gap-16 md:gap-24">
+                        <div class="text-center w-48 build-item">
+                            <div class="mx-auto p-4 rounded-full shadow-lg w-24 h-24 flex items-center justify-center" style="background-color: var(--color-primary-green);"><i class="fas fa-drafting-compass text-5xl text-white"></i></div>
+                            <p contenteditable="true" class="mt-3 font-bold text-xl text-gray-700">1. Kiến trúc sư Lực lượng Lao động</p>
+                        </div>
+                        <div class="text-center w-48 build-item">
+                            <div class="mx-auto p-4 rounded-full shadow-lg w-24 h-24 flex items-center justify-center" style="background-color: var(--color-primary-orange);"><i class="fas fa-heart text-5xl text-white"></i></div>
+                            <p contenteditable="true" class="mt-3 font-bold text-xl text-gray-700">2. Người Dẫn dắt Trải nghiệm Nhân viên</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center w-full max-w-3xl">
+                        <div class="w-full border-t-4 border-gray-300 border-dashed"></div>
+                        <div class="flex-shrink-0 w-48 h-48 bg-gray-800 rounded-full flex items-center justify-center text-center text-white p-4 shadow-2xl mx-4 md:mx-8 build-item">
+                            <span contenteditable="true" class="font-bold text-xl">LÃNH ĐẠO NHÂN SỰ KỶ NGUYÊN AI</span>
+                        </div>
+                        <div class="w-full border-t-4 border-gray-300 border-dashed"></div>
+                    </div>
+
+                    <!-- Bottom Row -->
+                    <div class="flex flex-wrap justify-center items-start gap-8">
+                        <div class="text-center w-48 build-item">
+                            <div class="mx-auto p-4 rounded-full shadow-lg w-24 h-24 flex items-center justify-center" style="background-color: var(--color-primary-blue-light);"><i class="fas fa-seedling text-5xl text-white"></i></div>
+                            <p contenteditable="true" class="mt-3 font-bold text-xl text-gray-700">3. Người vun trồng Văn hóa</p>
+                        </div>
+                        <div class="text-center w-48 build-item">
+                            <div class="mx-auto p-4 rounded-full shadow-lg w-24 h-24 flex items-center justify-center" style="background-color: var(--color-primary-blue-dark);"><i class="fas fa-shield-alt text-5xl text-white"></i></div>
+                            <p contenteditable="true" class="mt-3 font-bold text-xl text-gray-700">4. Người Bảo vệ Đạo đức</p>
+                        </div>
+                        <div class="text-center w-48 build-item">
+                            <div class="mx-auto p-4 rounded-full shadow-lg w-24 h-24 flex items-center justify-center" style="background-color: #6D28D9;"><i class="fas fa-cogs text-5xl text-white"></i></div>
+                            <p contenteditable="true" class="mt-3 font-bold text-xl text-gray-700">5. Chất xúc tác Hợp lực</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Slide 10: Minh họa đúng sai -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-10">
+                <h2 contenteditable="true" class="text-4xl font-bold text-center mb-8">Minh họa Tư duy: Phản ứng vs. Chiến lược</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="border-4 border-red-500 p-6 rounded-lg bg-red-50">
+                        <h3 contenteditable="true" class="text-3xl font-bold text-red-700 flex items-center"><i class="fas fa-times-circle mr-3"></i>TƯ DUY SAI (Phản ứng)</h3>
+                        <ul class="list-disc list-inside mt-4 space-y-2 text-2xl">
+                            <li contenteditable="true">"AI là việc của IT, họ sẽ đưa công cụ cho chúng ta dùng."</li>
+                            <li contenteditable="true">"Chúng ta cần một chatbot để giảm bớt các câu hỏi cho nhân sự."</li>
+                             <li contenteditable="true">"Hãy tìm một khóa học AI cho nhân viên."</li>
+                        </ul>
+                    </div>
+                    <div class="border-4 border-green-500 p-6 rounded-lg bg-green-50">
+                         <h3 contenteditable="true" class="text-3xl font-bold text-green-700 flex items-center"><i class="fas fa-check-circle mr-3"></i>TƯ DUY ĐÚNG (Chiến lược)</h3>
+                        <ul class="list-disc list-inside mt-4 space-y-2 text-2xl">
+                            <li contenteditable="true">"AI sẽ thay đổi kỹ năng nào chúng ta cần trong 3 năm tới?"</li>
+                            <li contenteditable="true">"Làm thế nào AI có thể tạo ra trải nghiệm siêu cá nhân hóa cho mọi nhân viên?"</li>
+                             <li contenteditable="true">"Làm sao để xây dựng văn hóa khuyến khích thử nghiệm AI một cách an toàn?"</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 11: Tiêu đề Phần 3 -->
+             <div class="slide bg-structural flex-col justify-center items-center text-center p-12" id="slide-11">
+                <div class="bg-image-overlay"></div>
+                <img src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover">
+                <div class="relative z-10">
+                    <p contenteditable="true" class="text-3xl text-gray-300">Phần 3</p>
+                    <h2 contenteditable="true" class="text-6xl font-bold mt-2">Bài học từ các Nhà lãnh đạo</h2>
+                    <p contenteditable="true" class="text-3xl mt-4 text-gray-200">Phân tích Case Study Thực tế</p>
+                </div>
+            </div>
+
+            <!-- Slide 12: Case Studies -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-12">
+                <h2 contenteditable="true" class="text-5xl font-bold text-center mb-10">Các công ty hàng đầu thế giới đã chứng minh vai trò lãnh đạo của Nhân sự trong AI.</h2>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="bg-white shadow-xl rounded-lg p-6 text-center build-item">
+                        <img src="https://logo.clearbit.com/unilever.com" class="h-12 mx-auto mb-4" alt="Unilever Logo">
+                        <h3 contenteditable="true" class="text-2xl font-bold">Unilever</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Cách mạng hóa tuyển dụng, giảm 90% thời gian và tăng 16% sự đa dạng bằng cách loại bỏ CV và dùng AI.</p>
+                        <p contenteditable="true" class="mt-4 font-bold text-green-600 text-xl">Bài học: Dẫn dắt sự thay đổi quy trình cốt lõi.</p>
+                    </div>
+                    <div class="bg-white shadow-xl rounded-lg p-6 text-center build-item">
+                        <img src="https://logo.clearbit.com/ibm.com" class="h-12 mx-auto mb-4" alt="IBM Logo">
+                        <h3 contenteditable="true" class="text-2xl font-bold">IBM</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Tái cấu trúc Nhân sự, tự động hóa 94% truy vấn và góp phần tăng 3.5 tỷ USD năng suất toàn công ty.</p>
+                        <p contenteditable="true" class="mt-4 font-bold text-green-600 text-xl">Bài học: Thay đổi mô hình hoạt động.</p>
+                    </div>
+                    <div class="bg-white shadow-xl rounded-lg p-6 text-center build-item">
+                        <img src="https://logo.clearbit.com/hilton.com" class="h-12 mx-auto mb-4" alt="Hilton Logo">
+                        <h3 contenteditable="true" class="text-2xl font-bold">Hilton</h3>
+                        <p contenteditable="true" class="mt-2 text-xl">Dùng AI để đánh giá phù hợp văn hóa & huấn luyện kỹ năng mềm, giảm 50% tỷ lệ nghỉ việc.</p>
+                        <p contenteditable="true" class="mt-4 font-bold text-green-600 text-xl">Bài học: Nâng cao yếu tố con người.</p>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Slide 13: Tiêu đề Phần 4 -->
+             <div class="slide bg-structural flex-col justify-center items-center text-center p-12" id="slide-13">
+                 <div class="bg-image-overlay"></div>
+                <img src="https://images.unsplash.com/photo-1497032628192-86f99d791ba7?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover">
+                <div class="relative z-10">
+                    <p contenteditable="true" class="text-3xl text-gray-300">Phần 4</p>
+                    <h2 contenteditable="true" class="text-6xl font-bold mt-2">Lộ trình Hành động</h2>
+                    <p contenteditable="true" class="text-3xl mt-4 text-gray-200">Công cụ và Khuôn khổ Thực hành</p>
+                </div>
+            </div>
+
+            <!-- Slide 14: Roadmap -->
+            <div class="slide bg-core-model flex-col justify-center p-16" id="slide-14">
+                <h2 contenteditable="true" class="text-5xl font-bold text-center mb-12">Lộ trình 4 giai đoạn giúp chuyển đổi từ tầm nhìn chiến lược sang thực thi hiệu quả.</h2>
+                <div class="relative w-full">
+                    <div class="absolute top-8 left-0 w-full h-1 bg-gray-300"></div>
+                    <div class="relative flex justify-between">
+                        <div class="text-center w-1/4 build-item">
+                            <div class="mx-auto w-16 h-16 rounded-full bg-blue-800 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-lg z-10 relative">1</div>
+                            <h3 contenteditable="true" class="mt-4 text-2xl font-bold">Lập chiến lược & Kế hoạch</h3>
+                            <p contenteditable="true" class="mt-2 text-xl">Xây dựng nền tảng, định hình tầm nhìn và ưu tiên.</p>
+                        </div>
+                        <div class="text-center w-1/4 build-item">
+                             <div class="mx-auto w-16 h-16 rounded-full bg-blue-800 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-lg z-10 relative">2</div>
+                            <h3 contenteditable="true" class="mt-4 text-2xl font-bold">Hợp tác & Đào tạo</h3>
+                            <p contenteditable="true" class="mt-2 text-xl">Chuẩn bị cho con người, xây dựng sự ủng hộ và kỹ năng.</p>
+                        </div>
+                        <div class="text-center w-1/4 build-item">
+                             <div class="mx-auto w-16 h-16 rounded-full bg-blue-800 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-lg z-10 relative">3</div>
+                            <h3 contenteditable="true" class="mt-4 text-2xl font-bold">Thí điểm & Mở rộng</h3>
+                            <p contenteditable="true" class="mt-2 text-xl">Từ thử nghiệm đến toàn doanh nghiệp.</p>
+                        </div>
+                        <div class="text-center w-1/4 build-item">
+                             <div class="mx-auto w-16 h-16 rounded-full bg-blue-800 text-white flex items-center justify-center text-3xl font-bold border-4 border-white shadow-lg z-10 relative">4</div>
+                            <h3 contenteditable="true" class="mt-4 text-2xl font-bold">Giám sát & Cải tiến</h3>
+                            <p contenteditable="true" class="mt-2 text-xl">Hướng tới sự cải tiến liên tục.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 15: Công cụ - Ma trận ưu tiên - REDESIGNED -->
+            <div class="slide bg-interactive flex-col justify-center items-center p-12" id="slide-15">
+                 <h2 contenteditable="true" class="text-5xl font-bold mb-2 text-center">Công cụ: Ma trận Ưu tiên Sáng kiến AI</h2>
+                 <p contenteditable="true" class="text-2xl mb-6 opacity-80 text-center">Bắt đầu với các dự án có tác động cao và khả thi nhất (Góc trên bên phải).</p>
+                 <div class="w-full max-w-4xl mx-auto flex items-center flex-grow">
+                    <p contenteditable="true" class="[writing-mode:vertical-rl] rotate-180 text-center font-bold text-xl mr-2">GIÁ TRỊ KINH DOANH</p>
+                    <div class="flex-grow flex flex-col h-full">
+                        <div class="grid grid-cols-2 grid-rows-2 flex-grow border-2 border-gray-400 relative">
+                            <div class="border-r-2 border-b-2 border-gray-400 p-2 relative flex items-start justify-start"><span contenteditable="true" class="p-2 rounded-md bg-yellow-400 text-black text-center font-bold text-lg">Xem xét</span></div>
+                            <div class="border-b-2 border-gray-400 p-2 relative flex items-start justify-start"><span contenteditable="true" class="p-2 rounded-md bg-green-500 text-white text-center font-bold text-lg">Ưu tiên</span></div>
+                            <div class="border-r-2 border-gray-400 p-2 relative flex items-start justify-start"><span contenteditable="true" class="p-2 rounded-md bg-red-500 text-white text-center font-bold text-lg">Tránh</span></div>
+                            <div class="p-2 relative flex items-start justify-start"><span contenteditable="true" class="p-2 rounded-md bg-blue-500 text-white text-center font-bold text-lg">Thử nghiệm</span></div>
+                            
+                            <div contenteditable="true" class="absolute bg-orange-500 text-white text-sm p-2 rounded-lg cursor-move" style="bottom: 80%; left: 80%;">Sàng lọc CV</div>
+                            <div contenteditable="true" class="absolute bg-orange-500 text-white text-sm p-2 rounded-lg cursor-move" style="bottom: 30%; left: 60%;">Phân tích cảm xúc</div>
+                            <div contenteditable="true" class="absolute bg-orange-500 text-white text-sm p-2 rounded-lg cursor-move" style="bottom: 20%; left: 20%;">Dự báo nghỉ việc</div>
+                        </div>
+                        <p contenteditable="true" class="text-center font-bold text-xl mt-2">TÍNH KHẢ THI</p>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Slide 16: Call to Action -->
+            <div class="slide bg-structural flex-col justify-center items-center text-center p-16" id="slide-16">
+                 <div class="bg-image-overlay"></div>
+                <img src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2942&auto=format&fit=crop&ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D" class="absolute inset-0 w-full h-full object-cover">
+                 <div class="relative z-10">
+                    <h2 contenteditable="true" class="text-5xl md:text-6xl font-bold leading-tight">Câu hỏi không còn là 'liệu có nên', mà là 'làm thế nào' Nhân sự sẽ dẫn dắt bằng AI.</h2>
+                    <p contenteditable="true" class="mt-8 text-3xl text-gray-200">Tương lai của công việc không được viết bằng mã lệnh, mà được định hình bởi văn hóa.</p>
+                    <button class="mt-10 bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 px-8 rounded-lg text-2xl transition-transform transform hover:scale-105">Bắt đầu Hành trình của bạn</button>
+                </div>
+            </div>
+
+             <!-- Slide 17: Thank you -->
+            <div class="slide bg-core-model flex-col justify-center items-center text-center p-12" id="slide-17">
+                <h2 contenteditable="true" class="text-6xl font-bold">Cảm ơn!</h2>
+                <p contenteditable="true" class="text-4xl mt-4">Hỏi & Đáp</p>
+                <div class="mt-12 text-2xl">
+                    <p contenteditable="true">Rosie Đào Hạnh Giang</p>
+                    <p contenteditable="true">CEO Build Talents</p>
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+    
+    <!-- External Side Controls -->
+    <button id="prev-btn" class="control-ui fixed left-4 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-25 hover:bg-opacity-50 rounded-full h-14 w-14 z-20 transition-all"><i class="fas fa-chevron-left"></i></button>
+    <button id="next-btn" class="control-ui fixed right-4 top-1/2 -translate-y-1/2 text-white bg-black bg-opacity-25 hover:bg-opacity-50 rounded-full h-14 w-14 z-20 transition-all"><i class="fas fa-chevron-right"></i></button>
+
+    <!-- Moved External Controls -->
+    <div class="control-ui fixed bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-6 z-30 bg-black bg-opacity-30 backdrop-blur-sm p-2 rounded-full">
+        <div id="toolbar" class="flex items-center gap-4 text-white text-xl">
+             <button id="presenter-btn" title="Chế độ Diễn giả (P)"><i class="fas fa-user-tie"></i></button>
+             <button id="export-btn" title="Xuất bản/Chia sẻ"><i class="fas fa-share-square"></i></button>
+             <button id="ai-btn" title="Trợ lý Sáng tạo AI"><i class="fas fa-magic"></i></button>
+             <button id="fullscreen-btn" title="Toàn màn hình (F)"><i class="fas fa-expand"></i></button>
+        </div>
+        <div id="progress-bar" class="flex items-center gap-2"></div>
+        <div id="slide-counter" class="text-white text-sm font-mono w-16 text-center">1 / N</div>
+    </div>
+    
+    <footer class="control-ui fixed bottom-4 left-4 text-xs text-white opacity-50 z-30">
+        Học Liệu cho đào tạo. Bản quyền thuộc Rosie Đào Hạnh Giang CEO Build Talents
+    </footer>
+
+    <!-- Export Modal -->
+    <div id="export-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-4">Xuất bản Trình chiếu</h2>
+            <p class="mb-4">Chọn các slide bạn muốn đưa vào file xuất bản.</p>
+            <div id="slide-checklist" class="max-h-64 overflow-y-auto border p-4 rounded mb-4">
+                <!-- Checkboxes will be inserted here -->
+            </div>
+            <div class="flex justify-end gap-4">
+                <button id="cancel-export-btn" class="px-4 py-2 bg-gray-200 rounded">Hủy</button>
+                <button id="export-html-btn" class="px-4 py-2 bg-blue-600 text-white rounded">Xuất ra HTML</button>
+                <button id="export-pdf-btn" class="px-4 py-2 bg-green-600 text-white rounded">Xuất ra PDF</button>
+            </div>
+        </div>
+    </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const slides = document.querySelectorAll('.slide');
+    const nextBtn = document.getElementById('next-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const slideCounter = document.getElementById('slide-counter');
+    const presenterBtn = document.getElementById('presenter-btn');
+    const exportBtn = document.getElementById('export-btn');
+    const exportModal = document.getElementById('export-modal');
+    const cancelExportBtn = document.getElementById('cancel-export-btn');
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    
+    let currentSlide = 0;
+    let currentBuildStep = 0;
+    let presenterWindow = null;
+    let lastActivityTime = Date.now();
+    let controlsVisible = true;
+    const controls = document.querySelectorAll('.control-ui');
+
+
+    function init() {
+        loadState();
+        showSlide(currentSlide);
+        createProgressBar();
+        updateUI();
+        setupEventListeners();
+        setupImageUploads();
+        checkActivity(); // Start checking for inactivity
+    }
+
+    function createProgressBar() {
+        progressBar.innerHTML = '';
+        slides.forEach((_, index) => {
+            const dot = document.createElement('button');
+            dot.className = 'w-3 h-3 rounded-full bg-white bg-opacity-25 transition-all';
+            dot.addEventListener('click', () => {
+                showSlide(index);
+            });
+            progressBar.appendChild(dot);
+        });
+    }
+
+    function showSlide(index, fromPresenter = false) {
+        if (index < 0 || index >= slides.length) return;
+
+        slides[currentSlide].classList.remove('active');
+        currentSlide = index;
+        slides[currentSlide].classList.add('active');
+        
+        // Reset build animations on the new slide
+        const buildItems = slides[currentSlide].querySelectorAll('.build-item');
+        buildItems.forEach(item => item.classList.remove('visible'));
+        currentBuildStep = 0;
+        
+        updateUI();
+        saveState();
+
+        if (!fromPresenter && presenterWindow && !presenterWindow.closed) {
+             presenterWindow.postMessage({ type: 'slide-change', index: currentSlide }, '*');
+        }
+    }
+    
+    function handleNext() {
+        const currentSlideEl = slides[currentSlide];
+        const buildItems = currentSlideEl.querySelectorAll('.build-item');
+        
+        if (currentBuildStep < buildItems.length) {
+            buildItems[currentBuildStep].classList.add('visible');
+            currentBuildStep++;
+        } else {
+            showSlide(currentSlide + 1);
+        }
+    }
+
+    function handlePrev() {
+        const currentSlideEl = slides[currentSlide];
+        const buildItems = currentSlideEl.querySelectorAll('.build-item');
+
+        if (currentBuildStep > 0) {
+            currentBuildStep--;
+            buildItems[currentBuildStep].classList.remove('visible');
+        } else {
+            showSlide(currentSlide - 1);
+        }
+    }
+
+    function updateUI() {
+        // Progress bar dots
+        const dots = progressBar.querySelectorAll('button');
+        dots.forEach((dot, index) => {
+            dot.style.backgroundColor = index === currentSlide ? 'var(--color-primary-orange)' : '';
+            dot.classList.toggle('bg-opacity-75', index === currentSlide);
+            dot.classList.toggle('bg-opacity-25', index !== currentSlide);
+        });
+
+        // Slide counter
+        slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+
+        // Prev/Next buttons visibility
+        prevBtn.style.visibility = currentSlide === 0 ? 'hidden' : 'visible';
+        nextBtn.style.visibility = currentSlide === slides.length - 1 ? 'hidden' : 'visible';
+    }
+
+    function openPresenterMode() {
+        if (presenterWindow && !presenterWindow.closed) {
+            presenterWindow.focus();
+            return;
+        }
+
+        presenterWindow = window.open('', 'PresenterMode', 'width=1000,height=700');
+        if (!presenterWindow) {
+            alert('Popup blocked! Please allow popups for this site.');
+            return;
+        }
+
+        const notes = slides[currentSlide].dataset.notes || "Không có ghi chú cho slide này.";
+        const nextSlideHtml = (currentSlide + 1 < slides.length) ? slides[currentSlide + 1].innerHTML : '<div>End of presentation</div>';
+
+        presenterWindow.document.write(`
+            <html>
+                <head>
+                    <title>Presenter View</title>
+                    <style>
+                        ${document.querySelector('style').innerHTML} /* Copy main styles */
+                        body { background: #111; color: white; font-family: 'Oswald', sans-serif; margin: 0; padding: 1rem; overflow: hidden; }
+                        .grid-container { display: grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto 1fr; gap: 1rem; height: 100vh; }
+                        .header { grid-column: 1 / 3; display: flex; justify-content: space-between; align-items: center; padding-bottom: 1rem; border-bottom: 1px solid #444;}
+                        #current-slide-view { grid-column: 1; grid-row: 2; border: 1px solid #444; background: #000; overflow: hidden; }
+                        #current-slide-view > div { transform: scale(0.95); transform-origin: center; height: 100%; }
+                        .side-panel { grid-column: 2; grid-row: 1 / 3; display: flex; flex-direction: column; gap: 1rem; }
+                        #next-slide-view { border: 1px solid #444; background: #000; flex: 0 0 30%; overflow: hidden; }
+                        #next-slide-view > div { transform: scale(0.8); transform-origin: top left; }
+                        #notes { border: 1px solid #444; padding: 1rem; flex-grow: 1; overflow-y: auto; font-size: 1.2rem; }
+                        #timer { font-size: 2rem; }
+                    </style>
+                </head>
+                <body>
+                    <div class="grid-container">
+                        <div class="header">
+                            <h1>Presenter View</h1>
+                            <div id="timer">00:00:00</div>
+                        </div>
+                        <div id="current-slide-view"></div>
+                        <div class="side-panel">
+                             <div id="next-slide-view"></div>
+                             <div id="notes"></div>
+                        </div>
+                    </div>
+                    <script>
+                        let startTime = Date.now();
+                        const timerEl = document.getElementById('timer');
+                        
+                        function updateTimer() {
+                            const elapsed = new Date(Date.now() - startTime);
+                            const h = String(elapsed.getUTCHours()).padStart(2, '0');
+                            const m = String(elapsed.getUTCMinutes()).padStart(2, '0');
+                            const s = String(elapsed.getUTCSeconds()).padStart(2, '0');
+                            timerEl.textContent = \`\${h}:\${m}:\${s}\`;
+                        }
+                        setInterval(updateTimer, 1000);
+
+                        window.addEventListener('message', (event) => {
+                            if(event.source !== window.opener) return;
+                            const { type, index, notes, currentHtml, nextHtml } = event.data;
+                            if (type === 'slide-update') {
+                                document.getElementById('current-slide-view').innerHTML = currentHtml;
+                                document.getElementById('next-slide-view').innerHTML = nextHtml;
+                                document.getElementById('notes').textContent = notes;
+                                // Make sure build items are correctly hidden
+                                const currentBuildItems = document.getElementById('current-slide-view').querySelectorAll('.build-item');
+                                currentBuildItems.forEach(item => item.classList.remove('visible'));
+                            }
+                        });
+
+                        window.addEventListener('keydown', (e) => {
+                            window.opener.postMessage({ type: 'presenter-key', key: e.key }, '*');
+                        });
+                    <\/script>
+                </body>
+            </html>
+        `);
+        presenterWindow.document.close();
+        
+        setTimeout(updatePresenterWindow, 100);
+    }
+    
+    function updatePresenterWindow() {
+        if (!presenterWindow || presenterWindow.closed) return;
+        
+        const notes = slides[currentSlide].dataset.notes || "Không có ghi chú cho slide này.";
+        const currentHtml = `<div class="slide active">${slides[currentSlide].innerHTML}</div>`;
+        const nextHtml = (currentSlide + 1 < slides.length) ? `<div class="slide active">${slides[currentSlide + 1].innerHTML}</div>` : '<div>End of presentation</div>';
+        
+        presenterWindow.postMessage({ type: 'slide-update', index: currentSlide, notes, currentHtml, nextHtml }, '*');
+    }
+    
+    window.addEventListener('message', (event) => {
+        if (event.source !== presenterWindow) return;
+        const { type, key } = event.data;
+        if (type === 'presenter-key') {
+            handleKeyPress({ key });
+        }
+    });
+
+    function handleKeyPress(e) {
+        if (e.target.isContentEditable) return; // Don't navigate when editing text
+        if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+            e.preventDefault();
+            handleNext();
+        } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+            e.preventDefault();
+            handlePrev();
+        } else if (e.key.toLowerCase() === 'p') {
+            e.preventDefault();
+            openPresenterMode();
+        } else if (e.key.toLowerCase() === 'f') {
+            e.preventDefault();
+            toggleFullScreen();
+        }
+        updatePresenterWindow();
+    }
+    
+     function toggleFullScreen() {
+        const elem = document.querySelector('.presentation-container');
+        const icon = fullscreenBtn.querySelector('i');
+
+        // Check if we are in any fullscreen mode
+        if (!document.fullscreenElement && !document.webkitFullscreenElement && !elem.classList.contains('fullscreen-active')) {
+            // --- ENTER FULLSCREEN ---
+            const requestFS = elem.requestFullscreen || elem.webkitRequestFullscreen || elem.mozRequestFullScreen || elem.msRequestFullscreen;
+            if (requestFS) {
+                requestFS.call(elem).catch(() => {
+                    // If native fails, use CSS fallback
+                    elem.classList.add('fullscreen-active');
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                });
+            } else {
+                // If API doesn't exist at all, use CSS fallback
+                elem.classList.add('fullscreen-active');
+                icon.classList.remove('fa-expand');
+                icon.classList.add('fa-compress');
+            }
+        } else {
+            // --- EXIT FULLSCREEN ---
+            const exitFS = document.exitFullscreen || document.webkitExitFullscreen || document.mozCancelFullScreen || document.msExitFullscreen;
+            if (exitFS && (document.fullscreenElement || document.webkitFullscreenElement)) {
+                exitFS.call(document).catch(console.error);
+            } else if (elem.classList.contains('fullscreen-active')) {
+                // Manually exit CSS fallback mode
+                elem.classList.remove('fullscreen-active');
+                icon.classList.remove('fa-compress');
+                icon.classList.add('fa-expand');
+            }
+        }
+    }
+
+
+    // Save/Load state
+    function saveState() {
+        localStorage.setItem('presentationState', JSON.stringify({ currentSlide }));
+    }
+
+    function loadState() {
+        const state = JSON.parse(localStorage.getItem('presentationState'));
+        if (state) {
+            currentSlide = state.currentSlide || 0;
+        }
+        loadContentEdits();
+    }
+    
+    function saveContentEdit(element) {
+        const slideId = element.closest('.slide').id;
+        const elementPath = getElementPath(element);
+        const key = `content-${slideId}-${elementPath}`;
+        localStorage.setItem(key, element.innerHTML);
+    }
+    
+    function loadContentEdits() {
+        for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key.startsWith('content-')) {
+                const parts = key.split('-');
+                const slideId = parts[1];
+                const elementPath = parts.slice(2).join('-');
+                const element = findElementByPath(slideId, elementPath);
+                if (element) {
+                    element.innerHTML = localStorage.getItem(key);
+                }
+            }
+        }
+    }
+
+    function getElementPath(element) {
+        let path = '';
+        while (element && !element.classList.contains('slide')) {
+            let siblingIndex = 0;
+            let sibling = element.previousElementSibling;
+            while(sibling) {
+                if (sibling.tagName === element.tagName) {
+                    siblingIndex++;
+                }
+                sibling = sibling.previousElementSibling;
+            }
+            path = `${element.tagName.toLowerCase()}[${siblingIndex}]>${path}`;
+            element = element.parentElement;
+        }
+        return path.slice(0, -1);
+    }
+    
+    function findElementByPath(slideId, path) {
+        const slide = document.getElementById(slideId);
+        if (!slide) return null;
+        let currentElement = slide;
+        try {
+            const parts = path.split('>');
+            for(const part of parts) {
+                const match = part.match(/(\w+)\[(\d+)\]/);
+                const tagName = match[1];
+                const index = parseInt(match[2], 10);
+                currentElement = currentElement.querySelectorAll(`:scope > ${tagName}`)[index];
+            }
+            return currentElement;
+        } catch(e) {
+            return null;
+        }
+    }
+
+    // Image Upload Logic
+    function setupImageUploads() {
+        document.querySelectorAll('.image-upload-zone').forEach((zone, index) => {
+            const input = zone.querySelector('input[type="file"]');
+            const removeBtn = zone.querySelector('button');
+            const storageKey = `image-upload-${index}`;
+            
+            // Load from localStorage
+            const savedImage = localStorage.getItem(storageKey);
+            if (savedImage) {
+                zone.style.backgroundImage = `url(${savedImage})`;
+            }
+
+            zone.addEventListener('click', () => input.click());
+            zone.addEventListener('dragover', (e) => e.preventDefault());
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files.length > 0) {
+                    handleFile(e.dataTransfer.files[0], zone, storageKey);
+                }
+            });
+            input.addEventListener('change', () => {
+                if (input.files.length > 0) {
+                    handleFile(input.files[0], zone, storageKey);
+                }
+            });
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                zone.style.backgroundImage = '';
+                localStorage.removeItem(storageKey);
+            });
+        });
+    }
+    
+    function handleFile(file, zone, storageKey) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            zone.style.backgroundImage = `url(${e.target.result})`;
+            localStorage.setItem(storageKey, e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Controls auto-hide
+    function checkActivity() {
+        const now = Date.now();
+        if (now - lastActivityTime > 3000 && controlsVisible) {
+            controls.forEach(c => c.style.opacity = '0');
+            controlsVisible = false;
+        }
+        requestAnimationFrame(checkActivity);
+    }
+
+    function resetActivityTimer() {
+        lastActivityTime = Date.now();
+        if (!controlsVisible) {
+            controls.forEach(c => c.style.opacity = '1');
+            controlsVisible = true;
+        }
+    }
+    
+    // Export functionality
+    function setupExportModal() {
+        const checklist = document.getElementById('slide-checklist');
+        checklist.innerHTML = '';
+        slides.forEach((slide, index) => {
+            const title = slide.querySelector('h1, h2, h3')?.textContent.substring(0, 40) || `Slide ${index+1}`;
+            const item = document.createElement('div');
+            item.className = 'flex items-center';
+            item.innerHTML = `
+                <input type="checkbox" id="check-${index}" data-index="${index}" class="mr-2" checked>
+                <label for="check-${index}">${index+1}. ${title}...</label>
+            `;
+            checklist.appendChild(item);
+        });
+    }
+
+    async function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [1920, 1080]
+        });
+
+        const selectedIndices = Array.from(document.querySelectorAll('#slide-checklist input:checked'))
+                                      .map(cb => parseInt(cb.dataset.index));
+        
+        for (let i = 0; i < selectedIndices.length; i++) {
+            const slideIndex = selectedIndices[i];
+            const slide = slides[slideIndex];
+            
+            // Temporarily make slide visible for rendering
+            const wasActive = slide.classList.contains('active');
+            if(!wasActive) slide.classList.add('active');
+
+            const canvas = await html2canvas(slide, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            
+            if (i > 0) pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, 0, 1920, 1080);
+            
+             if(!wasActive) slide.classList.remove('active');
+        }
+        
+        pdf.save('presentation.pdf');
+        exportModal.classList.add('hidden');
+    }
+
+    function exportToHTML() {
+        const selectedIndices = Array.from(document.querySelectorAll('#slide-checklist input:checked'))
+                                      .map(cb => parseInt(cb.dataset.index));
+        
+        let slidesHtml = '';
+        selectedIndices.forEach(index => {
+            slidesHtml += slides[index].outerHTML.replace('class="slide"', 'class="slide active" style="border:1px solid #ccc; margin-bottom: 20px;"');
+        });
+
+        const newHtml = `
+            <!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8">
+            <title>Exported Presentation</title>
+            <script src="https://cdn.tailwindcss.com"><\/script>
+            <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;700&display=swap" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+            <style>
+                body { font-family: 'Oswald', sans-serif; padding: 20px; }
+                .slide { width: 1280px; height: 720px; transform: scale(0.8); transform-origin: top left; }
+            </style>
+            </head><body>${slidesHtml}</body></html>`;
+        
+        const blob = new Blob([newHtml], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'presentation.html';
+        a.click();
+        URL.revokeObjectURL(a.href);
+        exportModal.classList.add('hidden');
+    }
+
+    function setupEventListeners() {
+        nextBtn.addEventListener('click', handleNext);
+        prevBtn.addEventListener('click', handlePrev);
+        document.addEventListener('keydown', handleKeyPress);
+        presenterBtn.addEventListener('click', openPresenterMode);
+        fullscreenBtn.addEventListener('click', toggleFullScreen);
+
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach( eventName => 
+            document.addEventListener(eventName, () => {
+                const icon = fullscreenBtn.querySelector('i');
+                const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+                if (isFullscreen) {
+                    icon.classList.remove('fa-expand');
+                    icon.classList.add('fa-compress');
+                } else {
+                    // When exiting native fullscreen (e.g., with ESC key), update icon and remove CSS class if it exists.
+                    icon.classList.remove('fa-compress');
+                    icon.classList.add('fa-expand');
+                    document.querySelector('.presentation-container').classList.remove('fullscreen-active');
+                }
+            })
+        );
+        
+        document.body.addEventListener('input', (e) => {
+            if (e.target.isContentEditable) {
+                saveContentEdit(e.target);
+            }
+        });
+
+        window.addEventListener('mousemove', resetActivityTimer);
+        window.addEventListener('touchstart', resetActivityTimer);
+
+        exportBtn.addEventListener('click', () => {
+            setupExportModal();
+            exportModal.classList.remove('hidden');
+        });
+        cancelExportBtn.addEventListener('click', () => exportModal.classList.add('hidden'));
+        document.getElementById('export-pdf-btn').addEventListener('click', exportToPDF);
+        document.getElementById('export-html-btn').addEventListener('click', exportToHTML);
+
+        // AI button placeholder
+        document.getElementById('ai-btn').addEventListener('click', () => {
+            alert('Trợ lý Sáng tạo AI đang được phát triển!');
+        });
+    }
+
+    init();
+});
+</script>
+</body>
+</html>
+
+
+
